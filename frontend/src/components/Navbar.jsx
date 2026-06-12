@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LogOut, User, Database, BookOpen, Layers, MessageSquare, ListTodo, Home, GraduationCap } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Database, BookOpen, Layers, MessageSquare, ListTodo, Home, GraduationCap } from 'lucide-react';
 
 export default function Navbar() {
     const [user, setUser] = useState(null);
+    const [theme, setTheme] = useState(localStorage.getItem('theme') || 'dark');
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -12,6 +13,15 @@ export default function Navbar() {
             setUser(JSON.parse(storedUser));
         }
     }, []);
+
+    useEffect(() => {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    };
 
     const handleLogout = () => {
         if (window.confirm('Are you sure you want to log out?')) {
@@ -52,6 +62,14 @@ export default function Navbar() {
                 </NavLink>
             </nav>
             <div className="header-nav" style={{ gap: '16px' }}>
+                <button 
+                    onClick={toggleTheme} 
+                    className="btn btn-secondary" 
+                    style={{ width: '36px', height: '36px', padding: 0, display: 'flex', justifyContent: 'center', alignItems: 'center', flexShrink: 0 }}
+                    title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                >
+                    {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
+                </button>
                 <div className="user-badge" style={{ textTransform: 'none' }}>
                     <User size={14} />
                     <span>{user.email.split('@')[0]} ({user.role})</span>

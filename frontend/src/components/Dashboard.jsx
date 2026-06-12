@@ -208,7 +208,7 @@ export default function Dashboard() {
                             
                             {/* --- IMPORT SETTINGS PANEL --- */}
                             <div className="upload-settings" style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '24px', background: 'rgba(255, 255, 255, 0.02)', padding: '20px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)' }}>
-                                <h4 style={{ fontSize: '1.05rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <h4 style={{ fontSize: '1.05rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                     <span>⚙️ Import Settings</span>
                                 </h4>
                                 
@@ -216,13 +216,13 @@ export default function Dashboard() {
                                     <div className="form-group">
                                         <span className="form-label" style={{ fontSize: '0.75rem' }}>Source Language</span>
                                         <select 
-                                            className="form-input" 
+                                            className="form-input select-styled" 
                                             value={sourceLang} 
                                             onChange={(e) => {
                                                 setSourceLang(e.target.value);
                                                 setSelectedCollections([]);
                                             }}
-                                            style={{ padding: '10px 14px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: '#ffffff', outline: 'none' }}
+                                            style={{ outline: 'none' }}
                                         >
                                             {WORLD_LANGUAGES.map(lang => (
                                                 <option key={lang.code} value={lang.code}>
@@ -235,10 +235,10 @@ export default function Dashboard() {
                                     <div className="form-group">
                                         <span className="form-label" style={{ fontSize: '0.75rem' }}>Target Language</span>
                                         <select 
-                                            className="form-input" 
+                                            className="form-input select-styled" 
                                             value={targetLang} 
                                             onChange={(e) => setTargetLang(e.target.value)}
-                                            style={{ padding: '10px 14px', background: 'var(--bg-primary)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', color: '#ffffff', outline: 'none' }}
+                                            style={{ outline: 'none' }}
                                         >
                                             {WORLD_LANGUAGES.filter(lang => lang.code !== sourceLang).map(lang => (
                                                 <option key={lang.code} value={lang.code}>
@@ -374,7 +374,7 @@ export default function Dashboard() {
                     {/* --- EXCEL TEMPLATE GUIDELINES CARD --- */}
                     <div className="stats-card" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                         <div className="guidelines-container" style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border)', padding: '20px', borderRadius: 'var(--radius-md)' }}>
-                            <h3 style={{ marginBottom: '12px', fontSize: '1.05rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h3 style={{ marginBottom: '12px', fontSize: '1.05rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                 <span>📋 Spreadsheet Format Guidelines</span>
                             </h3>
                             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '16px' }}>
@@ -426,7 +426,7 @@ export default function Dashboard() {
                         </div>
 
                         <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid var(--border)', padding: '20px', borderRadius: 'var(--radius-md)' }}>
-                            <h4 style={{ marginBottom: '10px', fontSize: '1rem', color: '#ffffff' }}>Dictionary Statistics</h4>
+                            <h4 style={{ marginBottom: '10px', fontSize: '1rem', color: 'var(--text-primary)' }}>Dictionary Statistics</h4>
                             <div className="stat-item">
                                 <div className="stat-icon accent">
                                     <FileText size={20} />

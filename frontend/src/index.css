@@ -33,6 +33,97 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+:root[data-theme="light"] {
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --border-glow: rgba(99, 102, 241, 0.08);
+  
+  --accent: #4f46e5;
+  --accent-hover: #3730a3;
+  --accent-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --accent-glow: rgba(79, 70, 229, 0.1);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-focus: rgba(79, 70, 229, 0.4);
+  
+  --success: #059669;
+  --success-glow: rgba(5, 150, 105, 0.08);
+  --error: #e11d48;
+  --error-glow: rgba(225, 29, 72, 0.08);
+}
+
+:root[data-theme="light"] .form-input {
+  background: #ffffff;
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] .form-input option {
+  color: var(--text-primary);
+  background: #ffffff;
+}
+
+:root[data-theme="light"] h1,
+:root[data-theme="light"] h2,
+:root[data-theme="light"] h3,
+:root[data-theme="light"] h4,
+:root[data-theme="light"] h5,
+:root[data-theme="light"] h6 {
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] .dashboard-title {
+  background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme="light"] .nav-link.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+:root[data-theme="light"] .nav-link:hover {
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] a:hover {
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .app-header {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+}
+
+:root[data-theme="light"] .upload-zone {
+  background: rgba(15, 23, 42, 0.02);
+}
+
+:root[data-theme="light"] .upload-zone:hover, :root[data-theme="light"] .upload-zone.drag-active {
+  background: rgba(79, 70, 229, 0.03);
+}
+
+:root[data-theme="light"] .toast-notification {
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+:root[data-theme="light"] .toast-success {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .toast-error {
+  color: #0f172a;
+}
+
+:root[data-theme="light"] .user-badge {
+  background: rgba(15, 23, 42, 0.03);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -209,11 +300,39 @@ a:hover {
   transition: var(--transition);
 }
 
+.select-styled {
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 16px center !important;
+  background-size: 16px !important;
+  padding-left: 16px !important;
+  padding-right: 40px !important;
+}
+
+/* Ensure dropdown options have solid backgrounds and correct text colors */
+select.form-input,
+.form-input option {
+  color: var(--text-primary) !important;
+  background-color: var(--bg-secondary) !important;
+}
+
+:root[data-theme="light"] select.form-input,
+:root[data-theme="light"] .form-input option {
+  color: var(--text-primary) !important;
+  background-color: #ffffff !important;
+}
+
 .form-input:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--border-glow);
   background: rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="light"] .form-input:focus {
+  background: #ffffff;
 }
 
 .form-input:focus + .form-input-icon {

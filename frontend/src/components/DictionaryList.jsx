@@ -1837,6 +1837,24 @@ export default function DictionaryList() {
                     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
                     animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
                 }
+                :root[data-theme="light"] .bulk-actions-floating-bar {
+                    background: rgba(255, 255, 255, 0.95);
+                    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+                }
+                :root[data-theme="light"] .sidebar-folder-item:hover {
+                    background: rgba(0, 0, 0, 0.03);
+                    color: var(--text-primary);
+                }
+                :root[data-theme="light"] .item-count {
+                    background: rgba(0, 0, 0, 0.05);
+                    color: var(--text-muted);
+                }
+                :root[data-theme="light"] .badge-toggle-btn {
+                    background: rgba(0, 0, 0, 0.02);
+                }
+                :root[data-theme="light"] .badge-toggle-btn:hover {
+                    background: rgba(0, 0, 0, 0.05);
+                }
                 @keyframes slideUp {
                     from { transform: translate(-50%, 100px); opacity: 0; }
                     to { transform: translate(-50%, 0); opacity: 1; }
