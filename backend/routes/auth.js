@@ -22,19 +22,35 @@ router.post('/register', async (req, res) => {
         const verificationToken = crypto.randomBytes(32).toString('hex');
         const newUser = await User.createUser(email, password, role, verificationToken);
 
-        // Simulate sending email verification link
-        const verificationLink = `http://localhost:5173/verify-email?token=${verificationToken}`;
-        console.log('\n--- EMAIL SIMULATION ---');
-        console.log(`To: ${email}`);
-        console.log(`Subject: Verify your TransLingua Account`);
-        console.log(`Link: ${verificationLink}`);
-        console.log('------------------------\n');
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const autoVerify = process.env.AUTO_VERIFY_EMAIL === 'true';
 
-        res.status(201).json({ 
-            message: 'Registration successful. Please check the server console for the verification link.',
-            userId: newUser.user_id, 
-            email: newUser.email 
-        });
+        if (autoVerify) {
+            // Auto-verify in dev mode — no email click required
+            await User.verifyUserByToken(verificationToken);
+            console.log(`\n[DEV] Auto-verified account: ${email}`);
+            res.status(201).json({ 
+                message: 'Registration successful! Your account has been automatically verified. You can log in now.',
+                userId: newUser.user_id, 
+                email: newUser.email,
+                verified: true
+            });
+        } else {
+            // Simulate sending email verification link
+            const verificationLink = `${frontendUrl}/verify-email?token=${verificationToken}`;
+            console.log('\n--- EMAIL SIMULATION ---');
+            console.log(`To: ${email}`);
+            console.log(`Subject: Verify your TransLingua Account`);
+            console.log(`Link: ${verificationLink}`);
+            console.log('------------------------\n');
+
+            res.status(201).json({ 
+                message: `Registration successful. Open this link to verify: ${verificationLink}`,
+                userId: newUser.user_id, 
+                email: newUser.email,
+                verified: false
+            });
+        }
     } catch (error) {
         console.error('Registration error:', error);
         res.status(500).json({ message: 'Server error during registration' });
@@ -94,13 +110,16 @@ router.post('/forgot-password', async (req, res) => {
             return res.status(400).json({ message: 'Email is required' });
         }
         const user = await User.findUserByEmail(email);
+        let resetLink = null;
         if (user) {
             const resetToken = crypto.randomBytes(32).toString('hex');
             const expires = new Date(Date.now() + 3600000); // 1 hour expiry
             await User.setPasswordResetToken(email, resetToken, expires);
 
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            resetLink = `${frontendUrl}/reset-password?token=${resetToken}`;
+
             // Simulate sending password reset email
-            const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
             console.log('\n--- EMAIL SIMULATION ---');
             console.log(`To: ${email}`);
             console.log(`Subject: Reset your TransLingua Password`);
@@ -108,8 +127,12 @@ router.post('/forgot-password', async (req, res) => {
             console.log('------------------------\n');
         }
         
-        // Return same status to avoid email harvesting
-        res.json({ message: 'If an account exists with that email, a password reset link has been logged to the server console.' });
+        // Return the link directly so user can use it without checking console
+        res.json({ 
+            message: resetLink 
+                ? `Password reset link generated. Click it to reset: ${resetLink}`
+                : 'If an account exists with that email, a password reset link has been generated.'
+        });
     } catch (error) {
         console.error('Forgot password error:', error);
         res.status(500).json({ message: 'Server error during password reset request' });

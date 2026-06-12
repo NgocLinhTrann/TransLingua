@@ -24,16 +24,21 @@ export default function Register() {
 
         try {
             const response = await axios.post('/api/auth/register', { email, password });
-            setSuccess(response.data.message || 'Registration successful! Check console for link.');
+            setSuccess(response.data.message || 'Registration successful!');
             setEmail('');
             setPassword('');
             setConfirmPassword('');
+            // If auto-verified, redirect to login after 2.5 seconds
+            if (response.data.verified) {
+                setTimeout(() => navigate('/login'), 2500);
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Registration failed. Please try again.');
         } finally {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="auth-wrapper">

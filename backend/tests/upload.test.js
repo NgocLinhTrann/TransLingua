@@ -64,41 +64,65 @@ describe('File Upload API Endpoints', () => {
             expect(response.body.message).toContain('Invalid file format');
         });
 
-        it('should successfully parse a valid Excel file and insert rows', async () => {
+        it('should successfully parse a valid Excel file with required Term/Translation headers and link to collections', async () => {
             const excelBuffer = createExcelBuffer([
-                ['Chinese', 'Vietnamese'],
-                ['你好', 'Xin chào'],
-                ['谢谢', 'Cảm ơn']
+                ['Term', 'Translation', 'Pronunciation', 'Category', 'Notes'],
+                ['hola', 'xin chào', 'o-la', 'Verb', 'Greeting in Spanish'],
+                ['gracias', 'cảm ơn', 'gra-syas', 'Noun', 'Thanks in Spanish']
             ]);
 
             mockClient.query.mockResolvedValueOnce({}); // BEGIN
-            mockClient.query.mockResolvedValueOnce({ rows: [{ dict_id: 1, term: '你好', translation: 'Xin chào', created_by: 1 }] }); // INSERT 1
-            mockClient.query.mockResolvedValueOnce({ rows: [{ dict_id: 2, term: '谢谢', translation: 'Cảm ơn', created_by: 1 }] }); // INSERT 2
+            mockClient.query.mockResolvedValueOnce({}); // INSERT source language
+            mockClient.query.mockResolvedValueOnce({}); // INSERT target language
+            mockClient.query.mockResolvedValueOnce({ rows: [{ dict_id: 10, term: 'hola' }] }); // INSERT term 1
+            mockClient.query.mockResolvedValueOnce({}); // LINK collection 1 to term 1
+            mockClient.query.mockResolvedValueOnce({}); // LINK collection 2 to term 1
+            mockClient.query.mockResolvedValueOnce({ rows: [{ dict_id: 11, term: 'gracias' }] }); // INSERT term 2
+            mockClient.query.mockResolvedValueOnce({}); // LINK collection 1 to term 2
+            mockClient.query.mockResolvedValueOnce({}); // LINK collection 2 to term 2
+            mockClient.query.mockResolvedValueOnce({}); // INSERT task log
             mockClient.query.mockResolvedValueOnce({}); // COMMIT
 
             const response = await request(app)
                 .post('/api/files/upload')
                 .set('Authorization', `Bearer ${token}`)
-                .attach('file', excelBuffer, 'dict.xlsx');
+                .field('source_lang', 'es')
+                .field('target_lang', 'vi')
+                .field('collection_ids', JSON.stringify([5, 8]))
+                .attach('file', excelBuffer, 'spanish.xlsx');
 
             expect(response.status).toBe(201);
             expect(response.body.count).toBe(2);
-            expect(response.body.entries[0].term).toBe('你好');
-            expect(response.body.entries[1].translation).toBe('Cảm ơn');
+            expect(response.body.entries[0].term).toBe('hola');
             expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
             expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
         });
 
-        it('should return 400 if sheet columns are invalid', async () => {
+        it('should return 400 if required headers (Term/Translation) are missing', async () => {
             const excelBuffer = createExcelBuffer([
-                ['OnlyOneColumnHeader'],
-                ['你好']
+                ['Pronunciation', 'Category', 'Notes'],
+                ['o-la', 'Verb', 'Greeting']
             ]);
 
             const response = await request(app)
                 .post('/api/files/upload')
                 .set('Authorization', `Bearer ${token}`)
                 .attach('file', excelBuffer, 'invalid.xlsx');
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('Missing required headers');
+        });
+
+        it('should return 400 if sheet structure contains less than two columns', async () => {
+            const excelBuffer = createExcelBuffer([
+                ['SingleColumn'],
+                ['test']
+            ]);
+
+            const response = await request(app)
+                .post('/api/files/upload')
+                .set('Authorization', `Bearer ${token}`)
+                .attach('file', excelBuffer, 'invalid_struct.xlsx');
 
             expect(response.status).toBe(400);
             expect(response.body.message).toContain('spreadsheet structure');

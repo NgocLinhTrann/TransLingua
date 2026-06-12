@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LogOut, User, Database, BookOpen, Layers, MessageSquare, ListTodo, Home } from 'lucide-react';
+import { LogOut, User, Database, BookOpen, Layers, MessageSquare, ListTodo, Home, GraduationCap } from 'lucide-react';
 
 export default function Navbar() {
     const [user, setUser] = useState(null);
@@ -38,13 +38,9 @@ export default function Navbar() {
                     <BookOpen size={16} />
                     Dictionary
                 </NavLink>
-                <NavLink to="/translation-memory" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Layers size={16} />
-                    Memory
-                </NavLink>
-                <NavLink to="/glossary" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <Database size={16} />
-                    Glossary
+                <NavLink to="/flashcards" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GraduationCap size={16} />
+                    Practice
                 </NavLink>
                 <NavLink to="/feedback" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <MessageSquare size={16} />

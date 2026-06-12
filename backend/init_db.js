@@ -1,6 +1,7 @@
 const { Client } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 async function initDb() {
@@ -70,6 +71,26 @@ async function initDb() {
         }
 
         console.log('Database tables successfully initialized!');
+
+        console.log('Seeding default languages...');
+        await client.query(`
+            INSERT INTO languages (code, name) VALUES 
+            ('zh', 'Chinese'),
+            ('vi', 'Vietnamese'),
+            ('en', 'English')
+            ON CONFLICT (code) DO NOTHING;
+        `);
+        console.log('Default languages successfully seeded!');
+
+        console.log('Seeding default verified users...');
+        const passwordHash = bcrypt.hashSync('password123', 10);
+        await client.query(`
+            INSERT INTO users (email, password_hash, role, is_verified) VALUES
+            ('debug@example.com', $1, 'user', true),
+            ('debug3@example.com', $1, 'user', true)
+            ON CONFLICT (email) DO NOTHING;
+        `, [passwordHash]);
+        console.log('Default verified users successfully seeded!');
     } catch (err) {
         console.error('Database initialization error:', err);
     } finally {

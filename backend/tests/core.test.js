@@ -13,8 +13,6 @@ process.env.JWT_SECRET = 'test_secret';
 
 const app = express();
 app.use(express.json());
-app.use('/api/translations', require('../routes/translations'));
-app.use('/api/glossary', require('../routes/glossary'));
 app.use('/api/dictionary', require('../routes/dictionary'));
 app.use('/api/feedback', require('../routes/feedback'));
 app.use('/api/tasks', require('../routes/tasks'));
@@ -29,80 +27,6 @@ describe('Core Features API Integration Tests', () => {
 
     beforeEach(() => {
         jest.clearAllMocks();
-    });
-
-    // 1. Translation Memory Tests
-    describe('Translation Memory Scoped CRUD', () => {
-        it('should fetch translations scoped only to the logged-in user', async () => {
-            mockPool.query.mockResolvedValueOnce({
-                rows: [{ id: 1, original_text: '你好', translated_text: 'Xin chào', created_by: 1 }]
-            });
-
-            const response = await request(app)
-                .get('/api/translations')
-                .set('Authorization', `Bearer ${userToken}`);
-
-            expect(response.status).toBe(200);
-            expect(response.body.length).toBe(1);
-            expect(mockPool.query).toHaveBeenCalledWith(
-                expect.stringContaining('SELECT * FROM translations WHERE created_by = $1'),
-                [1]
-            );
-        });
-
-        it('should allow user to create a translation', async () => {
-            mockPool.query.mockResolvedValueOnce({
-                rows: [{ id: 2, original_text: '谢谢', translated_text: 'Cảm ơn', created_by: 1 }]
-            });
-
-            const response = await request(app)
-                .post('/api/translations')
-                .set('Authorization', `Bearer ${userToken}`)
-                .send({ original_text: '谢谢', translated_text: 'Cảm ơn' });
-
-            expect(response.status).toBe(201);
-            expect(response.body.translated_text).toBe('Cảm ơn');
-        });
-    });
-
-    // 2. Glossary Admin Scoping Tests
-    describe('Glossary Admin Authorization Controls', () => {
-        it('should allow any authenticated user to view glossary terms', async () => {
-            mockPool.query.mockResolvedValueOnce({
-                rows: [{ term_id: 1, term: '确认', translation: 'xác nhận' }]
-            });
-
-            const response = await request(app)
-                .get('/api/glossary')
-                .set('Authorization', `Bearer ${userToken}`);
-
-            expect(response.status).toBe(200);
-            expect(response.body.length).toBe(1);
-        });
-
-        it('should reject standard users from creating glossary terms with 403', async () => {
-            const response = await request(app)
-                .post('/api/glossary')
-                .set('Authorization', `Bearer ${userToken}`)
-                .send({ term: '确认', translation: 'xác nhận' });
-
-            expect(response.status).toBe(403);
-            expect(response.body.message).toContain('Admin');
-        });
-
-        it('should allow administrators to create glossary terms', async () => {
-            mockPool.query.mockResolvedValueOnce({
-                rows: [{ term_id: 2, term: '提交', translation: 'gửi' }]
-            });
-
-            const response = await request(app)
-                .post('/api/glossary')
-                .set('Authorization', `Bearer ${adminToken}`)
-                .send({ term: '提交', translation: 'gửi' });
-
-            expect(response.status).toBe(201);
-            expect(response.body.term).toBe('提交');
-        });
     });
 
     // 3. User Feedback System Tests
@@ -140,6 +64,146 @@ describe('Core Features API Integration Tests', () => {
 
             expect(response.status).toBe(200);
             expect(response.body.length).toBe(1);
+        });
+    });
+
+    // 4. Personal Dictionary Leitner & Collections Tests
+    describe('Personal Dictionary Leitner & Collections', () => {
+        it('should allow user to create custom collections when no duplicate exists', async () => {
+            // First checkDup resolves to empty rows
+            mockPool.query.mockResolvedValueOnce({ rows: [] });
+            // Second INSERT resolves to created collection
+            mockPool.query.mockResolvedValueOnce({
+                rows: [{ collection_id: 1, name: 'Technical', color_code: '#6366f1', created_by: 1, source_lang: 'zh' }]
+            });
+
+            const response = await request(app)
+                .post('/api/dictionary/collections')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({ name: 'Technical', color_code: '#6366f1', source_lang: 'zh' });
+
+            expect(response.status).toBe(201);
+            expect(response.body.name).toBe('Technical');
+        });
+
+        it('should reject duplicate collection names with 400', async () => {
+            // checkDup resolves to an existing row
+            mockPool.query.mockResolvedValueOnce({ rows: [{ 1: 1 }] });
+
+            const response = await request(app)
+                .post('/api/dictionary/collections')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({ name: 'Technical', color_code: '#6366f1', source_lang: 'zh' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('already exists');
+        });
+
+        it('should reject collection names longer than 40 characters with 400', async () => {
+            const response = await request(app)
+                .post('/api/dictionary/collections')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({ name: 'a'.repeat(41), color_code: '#6366f1', source_lang: 'zh' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('40 characters or less');
+        });
+
+        it('should reject duplicate vocabulary terms with 400', async () => {
+            // checkDup resolves to an existing word under collections
+            mockPool.query.mockResolvedValueOnce({
+                rows: [{ dict_id: 1, term: '公司', collection_names: ['Business Vocabulary'] }]
+            });
+
+            const response = await request(app)
+                .post('/api/dictionary')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({ term: '公司', translation: 'công ty', source_lang: 'zh' });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('already exists in your dictionary');
+            expect(response.body.message).toContain('Business Vocabulary');
+        });
+
+        it('should fetch flashcards review queue', async () => {
+            mockPool.query.mockResolvedValueOnce({
+                rows: [{ dict_id: 1, term: '再见', translation: 'Tạm biệt', box_level: 1 }]
+            });
+
+            const response = await request(app)
+                .get('/api/dictionary/review')
+                .set('Authorization', `Bearer ${userToken}`);
+
+            expect(response.status).toBe(200);
+            expect(response.body[0].term).toBe('再见');
+        });
+
+        it('should update card box level on review submission', async () => {
+            // Mock fetch current level
+            mockPool.query.mockResolvedValueOnce({
+                rows: [{ box_level: 1 }]
+            });
+            // Mock update query
+            mockPool.query.mockResolvedValueOnce({
+                rows: [{ dict_id: 1, box_level: 2 }]
+            });
+
+            const response = await request(app)
+                .post('/api/dictionary/review/1')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({ correct: true });
+
+            expect(response.status).toBe(200);
+            expect(response.body.entry.box_level).toBe(2);
+        });
+
+        it('should reject vocabulary term if notes exceed 500 characters', async () => {
+            const longNotes = 'a'.repeat(501);
+            const response = await request(app)
+                .post('/api/dictionary')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({ term: '公司', translation: 'công ty', notes: longNotes });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('500 characters or less');
+        });
+
+        it('should reject vocabulary term if examples exceed 5 sentences', async () => {
+            const response = await request(app)
+                .post('/api/dictionary')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({
+                    term: '公司',
+                    translation: 'công ty',
+                    examples: [
+                        { original_sentence: '1', translated_sentence: '1' },
+                        { original_sentence: '2', translated_sentence: '2' },
+                        { original_sentence: '3', translated_sentence: '3' },
+                        { original_sentence: '4', translated_sentence: '4' },
+                        { original_sentence: '5', translated_sentence: '5' },
+                        { original_sentence: '6', translated_sentence: '6' }
+                    ]
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('Maximum of 5 example sentences');
+        });
+
+        it('should reject vocabulary term if any example sentence exceeds 200 characters', async () => {
+            const longSentence = 'a'.repeat(201);
+            const response = await request(app)
+                .post('/api/dictionary')
+                .set('Authorization', `Bearer ${userToken}`)
+                .send({
+                    term: '公司',
+                    translation: 'công ty',
+                    examples: [
+                        { original_sentence: longSentence, translated_sentence: '1' }
+                    ]
+                });
+
+            expect(response.status).toBe(400);
+            expect(response.body.message).toContain('200 characters or less');
         });
     });
 });

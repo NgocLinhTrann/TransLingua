@@ -129,7 +129,7 @@ describe('Authentication API Endpoints', () => {
                 .send({ email: 'test@example.com' });
 
             expect(response.status).toBe(200);
-            expect(response.body.message).toContain('logged to the server console');
+            expect(response.body.message).toContain('Password reset link generated');
         });
     });
 

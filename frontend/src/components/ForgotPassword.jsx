@@ -9,21 +9,29 @@ export default function ForgotPassword() {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
+    const [resetLink, setResetLink] = useState('');
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
+        setResetLink('');
         setLoading(true);
 
         try {
             const response = await axios.post('/api/auth/forgot-password', { email });
-            setSuccess(response.data.message || 'If an account exists, a link has been logged.');
+            const msg = response.data.message || 'If an account exists, a link has been generated.';
+            setSuccess(msg);
+            // Extract the actual URL from the message if present
+            const urlMatch = msg.match(/https?:\/\/\S+/);
+            if (urlMatch) setResetLink(urlMatch[0]);
         } catch (err) {
             setError(err.response?.data?.message || 'Request failed. Please try again later.');
         } finally {
             setLoading(false);
         }
     };
+
 
     return (
         <div className="auth-wrapper">
@@ -43,9 +51,21 @@ export default function ForgotPassword() {
                 {success && (
                     <div className="alert alert-success">
                         <CheckCircle2 size={18} style={{ flexShrink: 0 }} />
-                        <div>{success}</div>
+                        <div>
+                            {resetLink 
+                                ? 'Password reset link generated! Click the button below to reset your password.' 
+                                : success}
+                        </div>
                     </div>
                 )}
+
+                {resetLink && (
+                    <a href={resetLink} className="btn btn-primary" style={{ marginTop: '12px', display: 'flex', justifyContent: 'center' }}>
+                        <KeyRound size={18} />
+                        Click Here to Reset Password
+                    </a>
+                )}
+
 
                 {!success ? (
                     <form onSubmit={handleSubmit}>

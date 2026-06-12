@@ -7,10 +7,9 @@ import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import Dashboard from './components/Dashboard';
 import DictionaryList from './components/DictionaryList';
-import TranslationMemory from './components/TranslationMemory';
-import Glossary from './components/Glossary';
 import Feedback from './components/Feedback';
 import TasksTracker from './components/TasksTracker';
+import Flashcards from './components/Flashcards';
 
 function App() {
   return (
@@ -23,10 +22,9 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/dictionary" element={<DictionaryList />} />
-        <Route path="/translation-memory" element={<TranslationMemory />} />
-        <Route path="/glossary" element={<Glossary />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="/tasks" element={<TasksTracker />} />
+        <Route path="/flashcards" element={<Flashcards />} />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </BrowserRouter>

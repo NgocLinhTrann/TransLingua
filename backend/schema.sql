@@ -9,27 +9,48 @@ CREATE TABLE users (
     reset_token_expires TIMESTAMP
 );
 
-CREATE TABLE translations (
-    id SERIAL PRIMARY KEY,
-    original_text TEXT NOT NULL,
-    translated_text TEXT NOT NULL,
-    created_by INTEGER REFERENCES users(user_id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE glossary (
-    term_id SERIAL PRIMARY KEY,
-    term VARCHAR(255) NOT NULL,
-    translation TEXT NOT NULL,
-    created_by INTEGER REFERENCES users(user_id)
+CREATE TABLE languages (
+    code VARCHAR(10) PRIMARY KEY,
+    name VARCHAR(100) NOT NULL
 );
 
 CREATE TABLE dictionary (
     dict_id SERIAL PRIMARY KEY,
+    source_lang VARCHAR(10) REFERENCES languages(code) DEFAULT 'zh',
+    target_lang VARCHAR(10) REFERENCES languages(code) DEFAULT 'vi',
     term VARCHAR(255) NOT NULL,
+    pronunciation VARCHAR(255),
     translation TEXT NOT NULL,
+    part_of_speech VARCHAR(50),
+    notes TEXT,
+    box_level INTEGER DEFAULT 1,
+    next_review_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     created_by INTEGER REFERENCES users(user_id),
     verified_by INTEGER REFERENCES users(user_id)
+);
+
+CREATE TABLE collections (
+    collection_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    color_code VARCHAR(50) DEFAULT '#6366f1',
+    created_by INTEGER REFERENCES users(user_id),
+    source_lang VARCHAR(10) REFERENCES languages(code) DEFAULT 'zh',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (created_by, source_lang, name)
+);
+
+CREATE TABLE dictionary_collections (
+    dict_id INTEGER REFERENCES dictionary(dict_id) ON DELETE CASCADE,
+    collection_id INTEGER REFERENCES collections(collection_id) ON DELETE CASCADE,
+    PRIMARY KEY (dict_id, collection_id)
+);
+
+CREATE TABLE examples (
+    example_id SERIAL PRIMARY KEY,
+    dict_id INTEGER REFERENCES dictionary(dict_id) ON DELETE CASCADE,
+    original_sentence TEXT NOT NULL,
+    translated_sentence TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE feedback (

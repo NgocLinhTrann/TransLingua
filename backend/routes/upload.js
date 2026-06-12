@@ -13,6 +13,48 @@ const upload = multer({
     limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
 });
 
+const LANG_NAMES = {
+    'zh': 'Chinese',
+    'es': 'Spanish',
+    'en': 'English',
+    'hi': 'Hindi',
+    'ar': 'Arabic',
+    'bn': 'Bengali',
+    'pt': 'Portuguese',
+    'ru': 'Russian',
+    'ja': 'Japanese',
+    'pa': 'Punjabi',
+    'de': 'German',
+    'jv': 'Javanese',
+    'ms': 'Malay/Indonesian',
+    'ko': 'Korean',
+    'fr': 'French',
+    'te': 'Telugu',
+    'vi': 'Vietnamese',
+    'mr': 'Marathi',
+    'ta': 'Tamil',
+    'ur': 'Urdu',
+    'tr': 'Turkish',
+    'it': 'Italian',
+    'yue': 'Cantonese',
+    'th': 'Thai',
+    'gu': 'Gujarati',
+    'pl': 'Polish',
+    'uk': 'Ukrainian',
+    'fa': 'Persian',
+    'ml': 'Malayalam',
+    'kn': 'Kannada',
+    'or': 'Oriya'
+};
+
+const registerLanguage = async (client, code) => {
+    const name = LANG_NAMES[code] || code.toUpperCase();
+    await client.query(
+        'INSERT INTO languages (code, name) VALUES ($1, $2) ON CONFLICT (code) DO NOTHING',
+        [code, name]
+    );
+};
+
 // POST /api/files/upload
 router.post('/upload', authMiddleware, upload.single('file'), async (req, res) => {
     try {
@@ -38,44 +80,106 @@ router.post('/upload', authMiddleware, upload.single('file'), async (req, res) =
             return res.status(400).json({ message: 'The uploaded file is empty' });
         }
 
-        // Validate that there are at least two columns
-        const firstRow = data[0];
-        if (!firstRow || firstRow.length < 2) {
+        const headerRow = data[0];
+        if (!headerRow || headerRow.length < 2) {
             return res.status(400).json({ 
-                message: 'Invalid spreadsheet structure. The Excel sheet must contain at least two columns (Chinese and Vietnamese).' 
+                message: 'Invalid spreadsheet structure. The Excel sheet must contain a header row with at least Term/Original and Translation/Meaning columns.' 
             });
         }
 
-        // Check if the first row is a header and should be skipped
-        let startRow = 0;
-        const col1 = String(firstRow[0] || '').toLowerCase();
-        const col2 = String(firstRow[1] || '').toLowerCase();
-        if (
-            col1.includes('chinese') || col1.includes('original') || col1.includes('term') || col1.includes('zh') ||
-            col2.includes('vietnamese') || col2.includes('translation') || col2.includes('vi')
-        ) {
-            startRow = 1;
+        let termColIdx = -1;
+        let translationColIdx = -1;
+        let pronunciationColIdx = -1;
+        let categoryColIdx = -1;
+        let notesColIdx = -1;
+
+        for (let idx = 0; idx < headerRow.length; idx++) {
+            const cellVal = String(headerRow[idx] || '').trim().toLowerCase();
+            if (cellVal === 'term' || cellVal === 'original' || cellVal === 'word') {
+                termColIdx = idx;
+            } else if (cellVal === 'translation' || cellVal === 'meaning') {
+                translationColIdx = idx;
+            } else if (cellVal === 'pronunciation' || cellVal === 'pinyin') {
+                pronunciationColIdx = idx;
+            } else if (cellVal === 'category' || cellVal === 'part of speech' || cellVal === 'pos') {
+                categoryColIdx = idx;
+            } else if (cellVal === 'notes' || cellVal === 'note') {
+                notesColIdx = idx;
+            }
         }
+
+        // Validate required headers
+        if (termColIdx === -1 || translationColIdx === -1) {
+            return res.status(400).json({
+                message: 'Missing required headers in spreadsheet. First row must contain columns named "Term" (or "Original") and "Translation" (or "Meaning").'
+            });
+        }
+
+        // Get options from body
+        const sourceLang = req.body.source_lang || 'zh';
+        const targetLang = req.body.target_lang || 'vi';
+
+        let collectionIds = [];
+        if (req.body.collection_ids) {
+            try {
+                if (typeof req.body.collection_ids === 'string') {
+                    collectionIds = JSON.parse(req.body.collection_ids);
+                } else if (Array.isArray(req.body.collection_ids)) {
+                    collectionIds = req.body.collection_ids;
+                } else {
+                    collectionIds = [req.body.collection_ids];
+                }
+            } catch (err) {
+                collectionIds = [req.body.collection_ids];
+            }
+        }
+        collectionIds = collectionIds.map(id => parseInt(id)).filter(id => !isNaN(id));
 
         const insertedRows = [];
         const client = await pool.connect();
 
         try {
             await client.query('BEGIN');
+
+            // Auto register languages
+            await registerLanguage(client, sourceLang);
+            await registerLanguage(client, targetLang);
             
-            for (let i = startRow; i < data.length; i++) {
+            for (let i = 1; i < data.length; i++) {
                 const row = data[i];
-                if (!row || row.length < 2) continue; // Skip incomplete/empty rows
+                if (!row) continue;
                 
-                const term = row[0] ? String(row[0]).trim() : '';
-                const translation = row[1] ? String(row[1]).trim() : '';
+                const term = row[termColIdx] ? String(row[termColIdx]).trim() : '';
+                const translation = row[translationColIdx] ? String(row[translationColIdx]).trim() : '';
                 
                 if (term && translation) {
+                    const pronunciation = pronunciationColIdx !== -1 && row[pronunciationColIdx] ? String(row[pronunciationColIdx]).trim() : null;
+                    const partOfSpeech = categoryColIdx !== -1 && row[categoryColIdx] ? String(row[categoryColIdx]).trim() : null;
+                    const notes = notesColIdx !== -1 && row[notesColIdx] ? String(row[notesColIdx]).trim() : null;
+
+                    // Length validations matching manual adds
+                    if (term.length > 255) continue;
+                    if (translation.length > 2000) continue;
+                    if (pronunciation && pronunciation.length > 255) continue;
+                    if (partOfSpeech && partOfSpeech.length > 50) continue;
+                    if (notes && notes.length > 500) continue;
+
                     const result = await client.query(
-                        'INSERT INTO dictionary (term, translation, created_by) VALUES ($1, $2, $3) RETURNING *',
-                        [term, translation, req.user.userId]
+                        'INSERT INTO dictionary (source_lang, target_lang, term, pronunciation, translation, part_of_speech, notes, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *',
+                        [sourceLang, targetLang, term, pronunciation, translation, partOfSpeech, notes, req.user.userId]
                     );
-                    insertedRows.push(result.rows[0]);
+                    
+                    const dictEntry = result.rows[0];
+                    insertedRows.push(dictEntry);
+
+                    if (collectionIds.length > 0) {
+                        for (const colId of collectionIds) {
+                            await client.query(
+                                'INSERT INTO dictionary_collections (dict_id, collection_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                                [dictEntry.dict_id, colId]
+                            );
+                        }
+                    }
                 }
             }
             
