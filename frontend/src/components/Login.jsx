@@ -32,7 +32,7 @@ export default function Login() {
             <div className="auth-card">
                 <div className="auth-header">
                     <div className="auth-logo">TransLingua</div>
-                    <div className="auth-subtitle">Translate with Confidence</div>
+                    <div className="auth-subtitle">Learn with Confidence</div>
                 </div>
 
                 {error && (

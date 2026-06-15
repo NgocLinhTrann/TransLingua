@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from './Navbar';
-import { 
+import {
     Check, X, RefreshCw, Award, BookOpen, AlertCircle, Eye, ChevronRight
 } from 'lucide-react';
 
@@ -149,15 +149,15 @@ export default function Flashcards() {
         const token = localStorage.getItem('token');
 
         try {
-            await axios.post(`/api/dictionary/review/${currentCard.dict_id}`, 
+            await axios.post(`/api/dictionary/review/${currentCard.dict_id}`,
                 { correct },
                 { headers: { Authorization: `Bearer ${token}` } }
             );
-            
+
             // Advance state
             setSessionCount(prev => prev + 1);
             setIsFlipped(false);
-            
+
             setTimeout(() => {
                 if (currentIndex + 1 < queue.length) {
                     setCurrentIndex(prev => prev + 1);
@@ -188,7 +188,7 @@ export default function Flashcards() {
     return (
         <div className="app-container">
             <Navbar />
-            
+
             <main className="main-content">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                     <div>
@@ -226,9 +226,9 @@ export default function Flashcards() {
 
                         <div className="form-group" style={{ marginBottom: '16px' }}>
                             <label className="form-label">Language Focus</label>
-                            <select 
-                                className="form-input select-styled" 
-                                value={selectedLanguage} 
+                            <select
+                                className="form-input select-styled"
+                                value={selectedLanguage}
                                 onChange={(e) => {
                                     setSelectedLanguage(e.target.value);
                                     setSelectedCollectionId('all');
@@ -245,9 +245,9 @@ export default function Flashcards() {
 
                         <div className="form-group" style={{ marginBottom: '24px' }}>
                             <label className="form-label">Collection / Folder</label>
-                            <select 
-                                className="form-input select-styled" 
-                                value={selectedCollectionId} 
+                            <select
+                                className="form-input select-styled"
+                                value={selectedCollectionId}
                                 onChange={(e) => setSelectedCollectionId(e.target.value)}
                             >
                                 <option value="all">📁 All Collections</option>
@@ -261,8 +261,8 @@ export default function Flashcards() {
                             </select>
                         </div>
 
-                        <button 
-                            className="btn btn-primary" 
+                        <button
+                            className="btn btn-primary"
                             onClick={async () => {
                                 await fetchReviewQueue(selectedLanguage, selectedCollectionId);
                                 setPracticeMode(true);
@@ -311,7 +311,7 @@ export default function Flashcards() {
                         </div>
 
                         {/* 3D Flipping Flashcard Wrapper */}
-                        <div 
+                        <div
                             className={`flashcard-card ${isFlipped ? 'flipped' : ''}`}
                             onClick={() => setIsFlipped(!isFlipped)}
                         >
@@ -385,19 +385,19 @@ export default function Flashcards() {
 
                         {/* Answer Action Buttons */}
                         <div style={{ display: 'flex', gap: '16px', marginTop: '32px' }}>
-                            <button 
-                                className="btn btn-secondary review-action-btn action-incorrect" 
+                            <button
+                                className="btn btn-secondary review-action-btn action-incorrect"
                                 onClick={(e) => { e.stopPropagation(); handleAnswer(false); }}
                             >
                                 <X size={20} />
-                                Forgot / Wrong
+                                Forgot
                             </button>
-                            <button 
-                                className="btn btn-primary review-action-btn action-correct" 
+                            <button
+                                className="btn btn-primary review-action-btn action-correct"
                                 onClick={(e) => { e.stopPropagation(); handleAnswer(true); }}
                             >
                                 <Check size={20} />
-                                Correct / Remembered
+                                Remembered
                             </button>
                         </div>
                     </div>

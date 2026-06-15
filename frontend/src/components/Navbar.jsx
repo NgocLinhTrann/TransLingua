@@ -72,7 +72,7 @@ export default function Navbar() {
                 </button>
                 <div className="user-badge" style={{ textTransform: 'none' }}>
                     <User size={14} />
-                    <span>{user.email.split('@')[0]} ({user.role})</span>
+                    <span>{user.email.split('@')[0]}{user.role === 'admin' ? ' (admin)' : ''}</span>
                 </div>
                 <button onClick={handleLogout} className="btn btn-secondary" style={{ width: 'auto', padding: '6px 12px', display: 'flex', gap: '6px', fontSize: '0.85rem', height: '36px', alignItems: 'center' }}>
                     <LogOut size={14} />
