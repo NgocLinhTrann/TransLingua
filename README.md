@@ -2,7 +2,9 @@
 
 > **Your Dictionary, Your Rules – Learn with Confidence!**
 
-TransLingua is a premium, web-based **personal vocabulary builder and active learning companion**. It is designed to act as a single, centralized database for language learners to store, organize, and practice terminology from multiple languages simultaneously—replacing scattered notes across paper notebooks, Word documents, and loose spreadsheets.
+TransLingua is a personal vocabulary builder and active learning companion. It is designed to act as a single, centralized database for language learners to store, organize, and practice terminology from multiple languages simultaneously-replacing scattered notes across paper notebooks, Word documents, and loose spreadsheets.
+
+Watch the TransLingua Product Walkthrough on this link: https://www.youtube.com/watch?si=pzZwqXosbKvJvn8E&v=_l_CYvD0Rrg&feature=youtu.be
 
 ---
 
